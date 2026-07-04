@@ -19,8 +19,10 @@ import android.bluetooth.le.AdvertiseCallback;
 import android.bluetooth.le.AdvertiseData;
 import android.bluetooth.le.AdvertiseSettings;
 import android.bluetooth.le.BluetoothLeAdvertiser;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -28,6 +30,7 @@ import android.os.Looper;
 import android.os.ParcelUuid;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.UUID;
 import javax.crypto.Cipher;
@@ -36,6 +39,11 @@ import javax.crypto.spec.SecretKeySpec;
 public class BleHeartRateService extends Service {
     private static final String TAG = "BleHrService";
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
+
+    public static final String ACTION_STATUS_UPDATE = "com.abliveira.heartbt.STATUS_UPDATE";
+    public static final String ACTION_STATUS_REQUEST = "com.abliveira.heartbt.STATUS_REQUEST";
+    public static final String EXTRA_STATUS = "status";
+    public static final String EXTRA_BPM = "bpm";
 
     private static final String AMAZFIT_MAC = BuildConfig.AMAZFIT_MAC;
     private static final String AUTH_KEY_HEX = BuildConfig.AUTH_KEY_HEX;
@@ -58,7 +66,15 @@ public class BleHeartRateService extends Service {
     private BluetoothGatt amazfitGatt;
     private int currentLiveBpm = 0;
     private long lastHrTimestamp = 0;
+    private String currentStatus = "Connecting";
     private final Handler handler = new Handler(Looper.getMainLooper());
+
+    private final BroadcastReceiver statusRequestReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            sendStatusUpdate();
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -70,9 +86,18 @@ public class BleHeartRateService extends Service {
             return;
         }
 
+        IntentFilter statusRequestFilter = new IntentFilter(ACTION_STATUS_REQUEST);
+        ContextCompat.registerReceiver(
+                this,
+                statusRequestReceiver,
+                statusRequestFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED
+        );
+
         initializeBluetooth();
         setupVirtualGattServer();
         startAdvertising();
+        setCurrentStatus("Connecting");
         connectToAmazfit();
         startStatusMonitor();
     }
@@ -92,6 +117,7 @@ public class BleHeartRateService extends Service {
                 }
 
                 Log.i(TAG, "STATUS: BPM=" + currentLiveBpm + " | Watch=" + watchStatus + " | Client=" + clientStatus);
+                sendStatusUpdate();
                 handler.postDelayed(this, 3000);
             }
         }, 3000);
@@ -131,6 +157,8 @@ public class BleHeartRateService extends Service {
 
         BluetoothDevice amazfitDevice = bluetoothAdapter.getRemoteDevice(AMAZFIT_MAC);
 
+        setCurrentStatus("Connecting");
+
         Log.i(TAG, "WATCH: Connecting to configured watch at " + AMAZFIT_MAC + ".");
 
         try {
@@ -150,6 +178,8 @@ public class BleHeartRateService extends Service {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             try {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    setCurrentStatus("Connected");
+
                     Log.i(TAG, "WATCH: Connected. Requesting high connection priority.");
                     gatt.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH);
 
@@ -161,6 +191,8 @@ public class BleHeartRateService extends Service {
 
                     amazfitGatt = null;
                     currentLiveBpm = 0;
+
+                    setCurrentStatus("Connecting");
 
                     handler.postDelayed(() -> connectToAmazfit(), 5000);
                 }
@@ -206,9 +238,12 @@ public class BleHeartRateService extends Service {
                     currentLiveBpm = bpm;
                     lastHrTimestamp = System.currentTimeMillis();
 
+                    setCurrentStatus("Relaying");
+
                     Log.i(TAG, "HR: Received " + currentLiveBpm + " BPM from watch.");
 
                     forwardBpmToClient(currentLiveBpm);
+                    sendStatusUpdate();
                 } else {
                     Log.w(TAG, "HR: Watch reported 0 BPM. Value ignored.");
                 }
@@ -399,11 +434,13 @@ public class BleHeartRateService extends Service {
                 connectedClientDevice = device;
 
                 Log.i(TAG, "CLIENT: Connected to virtual heart rate service.");
+                sendStatusUpdate();
 
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                 connectedClientDevice = null;
 
                 Log.w(TAG, "CLIENT: Disconnected from virtual heart rate service.");
+                sendStatusUpdate();
             }
         }
 
@@ -443,6 +480,19 @@ public class BleHeartRateService extends Service {
         }
     };
 
+    private void setCurrentStatus(String status) {
+        currentStatus = status;
+        sendStatusUpdate();
+    }
+
+    private void sendStatusUpdate() {
+        Intent intent = new Intent(ACTION_STATUS_UPDATE);
+        intent.setPackage(getPackageName());
+        intent.putExtra(EXTRA_STATUS, currentStatus);
+        intent.putExtra(EXTRA_BPM, currentLiveBpm);
+        sendBroadcast(intent);
+    }
+
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
@@ -480,6 +530,11 @@ public class BleHeartRateService extends Service {
         super.onDestroy();
 
         handler.removeCallbacksAndMessages(null);
+
+        try {
+            unregisterReceiver(statusRequestReceiver);
+        } catch (IllegalArgumentException ignored) {
+        }
 
         try {
             if (amazfitGatt != null) {
