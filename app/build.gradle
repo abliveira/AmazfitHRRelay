@@ -1,0 +1,51 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace 'com.abliveira.heartbt'
+    compileSdk 36
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    defaultConfig {
+        applicationId "com.abliveira.heartbt"
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        Properties properties = new Properties()
+        if (project.rootProject.file('local.properties').exists()) {
+            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+        }
+
+        buildConfigField "String", "AMAZFIT_MAC", properties.getProperty("AMAZFIT_MAC", '""')
+        buildConfigField "String", "AUTH_KEY_HEX", properties.getProperty("AUTH_KEY_HEX", '""')
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.core.ktx
+    
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}
