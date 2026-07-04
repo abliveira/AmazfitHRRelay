@@ -53,7 +53,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="⚠️ AVISO IMPORTANTE"
+            android:text="IMPORTANT NOTICE"
             android:textColor="#E65100"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -62,7 +62,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingExtra="4dp"
-            android:text="Para evitar que o batimento trave ou a conexão caia:\n\n1. Vá em Configurações > Aplicativos > HeartBT.\n2. Bateria > Selecione 'SEM RESTRIÇÕES'.\n3. Mantenha o treino ativo no relógio.\n\nToque aqui para configurar."
+            android:text="To prevent heart rate updates from stopping or the connection from dropping:&#10;&#10;1. Go to Settings > Apps > HeartBT.&#10;2. Open Battery and select 'Unrestricted'.&#10;3. Keep the workout active on the watch.&#10;&#10;Tap here to configure battery optimization."
             android:textColor="#5D4037"
             android:textSize="14sp" />
     </LinearLayout>

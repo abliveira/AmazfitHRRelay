@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.setData(Uri.parse("package:" + packageName));
                 startActivity(intent);
             } else {
-                Toast.makeText(this, "Bateria já está configurada como 'Sem Restrições'.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Battery optimization is already disabled for this app.", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -83,13 +83,13 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(intent);
         }
-        Toast.makeText(this, "Heart Rate Relay Started", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Heart rate relay started.", Toast.LENGTH_SHORT).show();
     }
 
     private void stopHrService() {
         Intent intent = new Intent(this, BleHeartRateService.class);
         stopService(intent);
-        Toast.makeText(this, "Heart Rate Relay Stopped", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Heart rate relay stopped.", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
             if (allPermissionsGranted) {
                 startHrService();
             } else {
-                Toast.makeText(this, "Permissions required for BLE operation", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Bluetooth and notification permissions are required to start the heart rate relay.", Toast.LENGTH_SHORT).show();
             }
         }
     }
