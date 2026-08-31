@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.abliveira.heartbt'
+    namespace 'com.abliveira.amazfithrr'
     compileSdk 36
 
     buildFeatures {
@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.abliveira.heartbt"
+        applicationId "com.abliveira.amazfithrr"
         minSdk 26
         targetSdk 36
         versionCode 1

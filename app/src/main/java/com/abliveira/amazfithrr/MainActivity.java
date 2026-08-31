@@ -1,4 +1,4 @@
-package com.abliveira.heartbt;
+package com.abliveira.amazfithrr;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -30,8 +30,8 @@ public class MainActivity extends AppCompatActivity {
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String status = intent.getStringExtra(BleHeartRateService.EXTRA_STATUS);
-            int bpm = intent.getIntExtra(BleHeartRateService.EXTRA_BPM, 0);
+            String status = intent.getStringExtra(AmazfitRelayService.EXTRA_STATUS);
+            int bpm = intent.getIntExtra(AmazfitRelayService.EXTRA_BPM, 0);
 
             if (status != null) {
                 txtStatus.setText(status);
@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
-        IntentFilter filter = new IntentFilter(BleHeartRateService.ACTION_STATUS_UPDATE);
+        IntentFilter filter = new IntentFilter(AmazfitRelayService.ACTION_STATUS_UPDATE);
 
         ContextCompat.registerReceiver(
                 this,
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         );
 
         sendBroadcast(
-                new Intent(BleHeartRateService.ACTION_STATUS_REQUEST)
+                new Intent(AmazfitRelayService.ACTION_STATUS_REQUEST)
                         .setPackage(getPackageName())
         );
     }
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startHrService() {
-        Intent intent = new Intent(this, BleHeartRateService.class);
+        Intent intent = new Intent(this, AmazfitRelayService.class);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent);
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopHrService() {
-        Intent intent = new Intent(this, BleHeartRateService.class);
+        Intent intent = new Intent(this, AmazfitRelayService.class);
         stopService(intent);
 
         Toast.makeText(this, "Heart rate relay stopped.", Toast.LENGTH_SHORT).show();

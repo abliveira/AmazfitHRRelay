@@ -1,4 +1,4 @@
-package com.abliveira.heartbt;
+package com.abliveira.amazfithrr;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -36,12 +36,12 @@ import java.util.UUID;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
-public class BleHeartRateService extends Service {
-    private static final String TAG = "BleHrService";
+public class AmazfitRelayService extends Service {
+    private static final String TAG = "AmazfitRelayService";
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
 
-    public static final String ACTION_STATUS_UPDATE = "com.abliveira.heartbt.STATUS_UPDATE";
-    public static final String ACTION_STATUS_REQUEST = "com.abliveira.heartbt.STATUS_REQUEST";
+    public static final String ACTION_STATUS_UPDATE = "com.abliveira.amazfithrr.STATUS_UPDATE";
+    public static final String ACTION_STATUS_REQUEST = "com.abliveira.amazfithrr.STATUS_REQUEST";
     public static final String EXTRA_STATUS = "status";
     public static final String EXTRA_BPM = "bpm";
 

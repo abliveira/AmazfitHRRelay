@@ -16,7 +16,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HeartBT">
+        android:theme="@style/Theme.AmazfitHRR">
 
         <activity
             android:name=".MainActivity"
@@ -28,7 +28,7 @@
         </activity>
 
         <service
-            android:name=".BleHeartRateService"
+            android:name=".AmazfitRelayService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />

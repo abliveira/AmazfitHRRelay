@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Heart BT"
+rootProject.name = "Amazfit HR Relay"
 include ':app'
