@@ -1,6 +1,8 @@
 package com.abliveira.amazfithrr;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +25,7 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_PERMISSIONS = 1;
+    private static final int REQUEST_ENABLE_BLUETOOTH = 2;
 
     private TextView txtStatus;
     private TextView txtBpm;
@@ -57,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnStart.setOnClickListener(v -> {
             if (checkAndRequestPermissions()) {
-                startHrService();
+                startHrServiceIfBluetoothEnabled();
             }
         });
 
@@ -141,6 +144,28 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Heart rate relay started.", Toast.LENGTH_SHORT).show();
     }
 
+    private void startHrServiceIfBluetoothEnabled() {
+        BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
+        BluetoothAdapter bluetoothAdapter = bluetoothManager != null
+                ? bluetoothManager.getAdapter()
+                : null;
+
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, "Bluetooth is not available on this device.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!bluetoothAdapter.isEnabled()) {
+            startActivityForResult(
+                    new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),
+                    REQUEST_ENABLE_BLUETOOTH
+            );
+            return;
+        }
+
+        startHrService();
+    }
+
     private void stopHrService() {
         Intent intent = new Intent(this, AmazfitRelayService.class);
         stopService(intent);
@@ -163,9 +188,23 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (allPermissionsGranted) {
-                startHrService();
+                startHrServiceIfBluetoothEnabled();
             } else {
                 Toast.makeText(this, "Bluetooth and notification permissions are required to start the heart rate relay.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
+            if (resultCode == RESULT_OK) {
+                startHrServiceIfBluetoothEnabled();
+            } else {
+                Toast.makeText(this, "Bluetooth must be enabled to start the heart rate relay.", Toast.LENGTH_SHORT).show();
             }
         }
     }

@@ -64,6 +64,7 @@ public class AmazfitRelayService extends Service {
     private BluetoothDevice connectedClientDevice = null;
 
     private BluetoothGatt amazfitGatt;
+    private boolean bluetoothReady;
     private int currentLiveBpm = 0;
     private long lastHrTimestamp = 0;
     private String currentStatus = "Connecting";
@@ -95,6 +96,13 @@ public class AmazfitRelayService extends Service {
         );
 
         initializeBluetooth();
+        if (!bluetoothReady) {
+            setCurrentStatus("Bluetooth is turned off");
+            Log.w(TAG, "SERVICE: Bluetooth is unavailable or disabled. Relay will not start.");
+            stopSelf();
+            return;
+        }
+
         setupVirtualGattServer();
         startAdvertising();
         setCurrentStatus("Connecting");
@@ -125,6 +133,10 @@ public class AmazfitRelayService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (!bluetoothReady) {
+            return START_NOT_STICKY;
+        }
+
         createNotificationChannel();
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -140,12 +152,17 @@ public class AmazfitRelayService extends Service {
     private void initializeBluetooth() {
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 
-        if (bluetoothManager != null) {
-            bluetoothAdapter = bluetoothManager.getAdapter();
+        try {
+            if (bluetoothManager != null) {
+                bluetoothAdapter = bluetoothManager.getAdapter();
 
-            if (bluetoothAdapter != null) {
-                advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+                if (bluetoothAdapter != null && bluetoothAdapter.isEnabled()) {
+                    advertiser = bluetoothAdapter.getBluetoothLeAdvertiser();
+                    bluetoothReady = true;
+                }
             }
+        } catch (SecurityException e) {
+            Log.e(TAG, "SERVICE: Bluetooth state could not be read due to missing permission: " + e.getMessage());
         }
     }
 
@@ -351,8 +368,17 @@ public class AmazfitRelayService extends Service {
     }
 
     private void setupVirtualGattServer() {
+        if (bluetoothManager == null) {
+            Log.e(TAG, "GATT SERVER: Bluetooth manager is unavailable.");
+            return;
+        }
+
         try {
             gattServer = bluetoothManager.openGattServer(this, gattServerCallback);
+            if (gattServer == null) {
+                Log.e(TAG, "GATT SERVER: Could not open the GATT server.");
+                return;
+            }
 
             BluetoothGattService hrService = new BluetoothGattService(
                     REAL_HR_SERVICE_UUID,
