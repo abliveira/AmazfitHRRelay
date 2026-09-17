@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView txtStatus;
     private TextView txtBpm;
+    private TextView txtBatteryOptimization;
 
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         txtStatus = findViewById(R.id.txtStatus);
         txtBpm = findViewById(R.id.txtBpm);
+        txtBatteryOptimization = findViewById(R.id.txtBatteryOptimization);
 
         btnStart.setOnClickListener(v -> {
             if (checkAndRequestPermissions()) {
@@ -94,6 +96,12 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(statusReceiver);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateBatteryOptimizationWarning();
+    }
+
     private boolean checkAndRequestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED ||
@@ -129,6 +137,27 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "Battery optimization is already disabled for this app.", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    private void updateBatteryOptimizationWarning() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            txtBatteryOptimization.setText("Battery optimization is not supported on this Android version.");
+            return;
+        }
+
+        PowerManager powerManager = getSystemService(PowerManager.class);
+        boolean optimizationDisabled = powerManager != null
+                && powerManager.isIgnoringBatteryOptimizations(getPackageName());
+
+        if (optimizationDisabled) {
+            txtBatteryOptimization.setText(
+                    "Battery optimization is disabled for this app. The relay is allowed to keep running in the background."
+            );
+        } else {
+            txtBatteryOptimization.setText(
+                    "Battery optimization is enabled. Tap here to allow the relay to run without battery optimization."
+            );
         }
     }
 
